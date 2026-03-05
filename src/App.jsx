@@ -1,9 +1,35 @@
 import { useState, useRef, useCallback } from 'react'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const SYSTEM_PROMPT = `You are TalkMyBill, a friendly AI that helps New Yorkers understand their Con Edison electricity bills. Explain each charge in plain casual English, flag anything unusual compared to typical NYC Con Ed rates (average $0.21-0.25 per kWh), and give actionable tips. Format response in 3 sections: 🧾 WHAT YOUR BILL SAYS, ⚠️ FLAGS, 💡 TIPS. Be warm like a friend helping them. Call out anything above average rates or vague charges. Include Con Ed dispute line 1-800-752-6633 and NY PSC 1-800-342-3377 when relevant.`
 
 const USER_MESSAGE = `Please analyze this Con Edison bill and explain it to me in plain English. What am I being charged for? Is anything unusual? What should I do?`
+
+// Load PDF.js from CDN and convert first page → base64 PNG
+async function pdfToBase64Image(file) {
+  if (!window.pdfjsLib) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script')
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
+      s.onload = resolve
+      s.onerror = () => reject(new Error('Failed to load PDF renderer'))
+      document.head.appendChild(s)
+    })
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+  }
+
+  const arrayBuffer = await file.arrayBuffer()
+  const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise
+  const page = await pdf.getPage(1)
+  const viewport = page.getViewport({ scale: 2.5 })
+
+  const canvas = document.createElement('canvas')
+  canvas.width = viewport.width
+  canvas.height = viewport.height
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise
+
+  return canvas.toDataURL('image/png').split(',')[1]
+}
 
 function formatAnalysis(text) {
   const lines = text.split('\n')
@@ -13,9 +39,7 @@ function formatAnalysis(text) {
   const flushList = (key) => {
     if (listItems.length > 0) {
       elements.push(
-        <ul key={`ul-${key}`} className="analysis-list">
-          {listItems}
-        </ul>
+        <ul key={`ul-${key}`} className="analysis-list">{listItems}</ul>
       )
       listItems = []
     }
@@ -24,6 +48,7 @@ function formatAnalysis(text) {
   lines.forEach((line, i) => {
     const trimmed = line.trim()
     if (!trimmed) { flushList(i); return }
+
     if (/^(🧾|⚠️|💡)/.test(trimmed)) {
       flushList(i)
       elements.push(<h3 key={i} className="section-header">{trimmed}</h3>)
@@ -35,12 +60,14 @@ function formatAnalysis(text) {
       return
     }
     if (/^[•\-\*]\s/.test(trimmed) || /^\d+\.\s/.test(trimmed)) {
-      listItems.push(<li key={i}>{trimmed.replace(/^[•\-\*]\s+/, '').replace(/^\d+\.\s+/, '').replace(/\*\*/g, '')}</li>)
+      const clean = trimmed.replace(/^[•\-\*]\s+/, '').replace(/^\d+\.\s+/, '').replace(/\*\*/g, '')
+      listItems.push(<li key={i}>{clean}</li>)
       return
     }
     flushList(i)
     elements.push(<p key={i} className="analysis-p">{trimmed.replace(/\*\*([^*]+)\*\*/g, '$1')}</p>)
   })
+
   flushList('end')
   return elements
 }
@@ -55,13 +82,24 @@ export default function App() {
 
   const acceptFile = useCallback((f) => {
     if (!f) return
-    const validTypes = ['image/jpeg','image/png','image/gif','image/webp','image/heic','application/pdf']
-    if (!validTypes.includes(f.type)) { setError('Please upload a PDF or image (JPG, PNG, WEBP, GIF).'); return }
-    if (f.size > 20 * 1024 * 1024) { setError('File too large — please keep it under 20 MB.'); return }
-    setError(''); setFile(f); setAppState('selected')
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'application/pdf']
+    if (!validTypes.includes(f.type)) {
+      setError('Please upload a PDF or image (JPG, PNG, WEBP, GIF).')
+      return
+    }
+    if (f.size > 20 * 1024 * 1024) {
+      setError('File too large — please keep it under 20 MB.')
+      return
+    }
+    setError('')
+    setFile(f)
+    setAppState('selected')
   }, [])
 
-  const handleDrop = useCallback((e) => { e.preventDefault(); setIsDragging(false); acceptFile(e.dataTransfer.files[0]) }, [acceptFile])
+  const handleDrop = useCallback((e) => {
+    e.preventDefault(); setIsDragging(false); acceptFile(e.dataTransfer.files[0])
+  }, [acceptFile])
+
   const handleDragOver = useCallback((e) => { e.preventDefault(); setIsDragging(true) }, [])
   const handleDragLeave = useCallback((e) => { e.preventDefault(); setIsDragging(false) }, [])
 
@@ -73,18 +111,66 @@ export default function App() {
   })
 
   const analyzeFile = async () => {
-    setAppState('loading'); setError('')
+    setAppState('loading')
+    setError('')
+
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY
-      if (!apiKey) throw new Error('Missing VITE_GEMINI_API_KEY — check your .env file.')
-      const genAI = new GoogleGenerativeAI(apiKey)
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-8b', systemInstruction: SYSTEM_PROMPT })
-      const base64 = await toBase64(file)
-      const result = await model.generateContent([{ inlineData: { data: base64, mimeType: file.type } }, USER_MESSAGE])
-      setAnalysis(result.response.text())
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY
+      if (!apiKey) throw new Error('Missing VITE_OPENAI_API_KEY — check your .env file.')
+
+      // Convert PDF → PNG image, or read image directly
+      let base64, mimeType
+      if (file.type === 'application/pdf') {
+        base64 = await pdfToBase64Image(file)
+        mimeType = 'image/png'
+      } else {
+        base64 = await toBase64(file)
+        mimeType = file.type
+      }
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          max_tokens: 2048,
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:${mimeType};base64,${base64}`,
+                    detail: 'high',
+                  },
+                },
+                { type: 'text', text: USER_MESSAGE },
+              ],
+            },
+          ],
+        }),
+      })
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData?.error?.message || `Request failed (${response.status})`)
+      }
+
+      const data = await response.json()
+      const text = data.choices?.[0]?.message?.content
+      if (!text) throw new Error('No response received. Please try again.')
+
+      setAnalysis(text)
       setAppState('results')
     } catch (err) {
-      console.error(err); setError(err.message || 'Something went wrong — please try again.'); setAppState('selected')
+      console.error(err)
+      setError(err.message || 'Something went wrong — please try again.')
+      setAppState('selected')
     }
   }
 
@@ -98,20 +184,40 @@ export default function App() {
           <span className="free-badge">FREE • No signup needed</span>
         </div>
       </header>
+
       <main className="main">
+
         {appState === 'landing' && (
           <section className="card landing-card">
             <div className="hero-emoji">🧾</div>
             <h1 className="hero-title">What is Con Ed even<br />charging me for? 🤔</h1>
-            <p className="hero-sub">Drop your bill below — we'll translate every line into plain English, flag sketchy charges, and tell you exactly what to do about it.</p>
-            <div className={`drop-zone${isDragging ? ' drop-zone--active' : ''}`} onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onClick={() => fileInputRef.current.click()} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current.click()} aria-label="Upload your Con Ed bill">
+            <p className="hero-sub">
+              Drop your bill below — we'll translate every line into plain English,
+              flag sketchy charges, and tell you exactly what to do about it.
+            </p>
+
+            <div
+              className={`drop-zone${isDragging ? ' drop-zone--active' : ''}`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onClick={() => fileInputRef.current.click()}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current.click()}
+              aria-label="Upload your Con Ed bill"
+            >
               <span className="drop-icon">📂</span>
               <p className="drop-main">Drag &amp; drop your bill here</p>
               <p className="drop-hint">or <u>click to browse</u></p>
               <p className="drop-formats">PDF · JPG · PNG · WEBP — up to 20 MB</p>
             </div>
-            <input ref={fileInputRef} type="file" accept="image/*,.pdf" onChange={(e) => acceptFile(e.target.files[0])} className="sr-only" aria-hidden="true" />
+
+            <input ref={fileInputRef} type="file" accept="image/*,.pdf"
+              onChange={(e) => acceptFile(e.target.files[0])}
+              className="sr-only" aria-hidden="true" />
+
             {error && <div className="error-box">⚠️ {error}</div>}
+
             <div className="features">
               <div className="feature-chip">🔍 Explains every charge</div>
               <div className="feature-chip">⚠️ Flags unusual rates</div>
@@ -119,10 +225,12 @@ export default function App() {
             </div>
           </section>
         )}
+
         {appState === 'selected' && (
           <section className="card selected-card">
             <h2 className="selected-title">Got your bill! 📬</h2>
             <p className="selected-sub">Ready to decode it for you.</p>
+
             <div className="file-preview">
               <span className="file-emoji">{file?.type === 'application/pdf' ? '📄' : '🖼️'}</span>
               <div className="file-meta">
@@ -131,37 +239,48 @@ export default function App() {
               </div>
               <button className="remove-btn" onClick={reset} aria-label="Remove file">✕</button>
             </div>
+
             {error && <div className="error-box">⚠️ {error}</div>}
             <button className="cta-btn" onClick={analyzeFile}>Explain My Bill! ⚡</button>
             <button className="ghost-btn" onClick={reset}>Upload a different file</button>
           </section>
         )}
+
         {appState === 'loading' && (
           <section className="card loading-card">
             <div className="bolt-wrap"><span className="bolt" aria-hidden="true">⚡</span></div>
             <h2 className="loading-title">Reading your bill…</h2>
             <p className="loading-sub">Our AI is scanning every line 🔍</p>
-            <div className="progress-dots"><span className="dot" /><span className="dot" /><span className="dot" /></div>
+            <div className="progress-dots">
+              <span className="dot" /><span className="dot" /><span className="dot" />
+            </div>
           </section>
         )}
+
         {appState === 'results' && (
           <section className="results-wrap">
             <div className="results-header">
               <h2 className="results-title">Here's what's going on 👇</h2>
               <p className="results-sub">Plain English, no jargon, no fluff.</p>
             </div>
+
             <div className="analysis-card">{formatAnalysis(analysis)}</div>
+
             <div className="action-row">
               <a href="tel:18007526633" className="action-btn action-btn--primary">📞 Call Con Ed</a>
-              <a href="https://www.coned.com" target="_blank" rel="noopener noreferrer" className="action-btn action-btn--outline">🌐 Con Ed Website</a>
+              <a href="https://www.coned.com" target="_blank" rel="noopener noreferrer"
+                className="action-btn action-btn--outline">🌐 Con Ed Website</a>
             </div>
             <div className="action-row action-row--single">
-              <a href="tel:18003423377" className="action-btn action-btn--ghost">📋 NY PSC Hotline — 1-800-342-3377</a>
+              <a href="tel:18003423377" className="action-btn action-btn--ghost">
+                📋 NY PSC Hotline — 1-800-342-3377
+              </a>
             </div>
             <button className="analyze-again-btn" onClick={reset}>📄 Analyze Another Bill</button>
           </section>
         )}
       </main>
+
       <footer className="footer">
         <p>Built for New Yorkers 🗽 &bull; Not financial or legal advice &bull; TalkMyBill</p>
       </footer>
