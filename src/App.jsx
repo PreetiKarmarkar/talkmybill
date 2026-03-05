@@ -78,7 +78,7 @@ export default function App() {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY
       if (!apiKey) throw new Error('Missing VITE_GEMINI_API_KEY — check your .env file.')
       const genAI = new GoogleGenerativeAI(apiKey)
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash', systemInstruction: SYSTEM_PROMPT })
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-8b', systemInstruction: SYSTEM_PROMPT })
       const base64 = await toBase64(file)
       const result = await model.generateContent([{ inlineData: { data: base64, mimeType: file.type } }, USER_MESSAGE])
       setAnalysis(result.response.text())
