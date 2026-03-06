@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback } from 'react'
 
-const SYSTEM_PROMPT = `You are TalkMyBill, a friendly AI that helps New Yorkers understand their Con Edison electricity bills. Explain each charge in plain casual English, flag anything unusual compared to typical NYC Con Ed rates (average $0.21-0.25 per kWh), and give actionable tips. Format response in 3 sections: 🧾 WHAT YOUR BILL SAYS, ⚠️ FLAGS, 💡 TIPS. Be warm like a friend helping them. Call out anything above average rates or vague charges. Include Con Ed dispute line 1-800-752-6633 and NY PSC 1-800-342-3377 when relevant.`
+const SYSTEM_PROMPT = `You are TalkMyBill, a friendly AI that helps people understand any bill they receive. This includes electricity bills, medical bills, hospital bills, health insurance EOBs, phone bills, internet/wifi bills, credit card statements, utility bills, subscription bills, and more. When given a bill: explain every charge in plain casual English, flag anything unusual or above average market rates, identify potential overcharges or duplicate charges, and give specific actionable tips including who to call and how to dispute. Format response in 3 sections: 🧾 WHAT YOUR BILL SAYS, ⚠️ FLAGS, 💡 TIPS. Be warm and empowering like a knowledgeable friend helping them navigate confusing charges. Always include relevant contact numbers or dispute processes when applicable.`
 
-const USER_MESSAGE = `Please analyze this Con Edison bill and explain it to me in plain English. What am I being charged for? Is anything unusual? What should I do?`
+const USER_MESSAGE = `Please analyze this bill and explain it to me in plain English. What am I being charged for? Is anything unusual? What should I do?`
 
 // Load PDF.js from CDN and convert first page → base64 PNG
 async function pdfToBase64Image(file) {
@@ -186,7 +186,7 @@ export default function App() {
 
       <header className="header">
         <div className="header-inner">
-          <span className="logo">⚡ TalkMyBill</span>
+          <span className="logo">🧾 TalkMyBill</span>
           <span className="free-badge">FREE • No signup needed</span>
         </div>
       </header>
@@ -196,10 +196,9 @@ export default function App() {
         {appState === 'landing' && (
           <section className="card landing-card">
             <div className="hero-emoji">🧾</div>
-            <h1 className="hero-title">What is Con Ed even<br />charging me for? 🤔</h1>
+            <h1 className="hero-title">What is this bill even<br />charging me for? 🤔</h1>
             <p className="hero-sub">
-              Drop your bill below — we'll translate every line into plain English,
-              flag sketchy charges, and tell you exactly what to do about it.
+              Drop any bill — medical, electric, phone, wifi, insurance — we'll explain every charge in plain English
             </p>
 
             <div
@@ -210,7 +209,7 @@ export default function App() {
               onClick={() => fileInputRef.current.click()}
               role="button" tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current.click()}
-              aria-label="Upload your Con Ed bill"
+              aria-label="Upload your bill"
             >
               <span className="drop-icon">📂</span>
               <p className="drop-main">Drag &amp; drop your bill here</p>
@@ -272,23 +271,13 @@ export default function App() {
 
             <div className="analysis-card">{formatAnalysis(analysis)}</div>
 
-            <div className="action-row">
-              <a href="tel:18007526633" className="action-btn action-btn--primary">📞 Call Con Ed</a>
-              <a href="https://www.coned.com" target="_blank" rel="noopener noreferrer"
-                className="action-btn action-btn--outline">🌐 Con Ed Website</a>
-            </div>
-            <div className="action-row action-row--single">
-              <a href="tel:18003423377" className="action-btn action-btn--ghost">
-                📋 NY PSC Hotline — 1-800-342-3377
-              </a>
-            </div>
             <button className="analyze-again-btn" onClick={reset}>📄 Analyze Another Bill</button>
           </section>
         )}
       </main>
 
       <footer className="footer">
-        <p>Built for New Yorkers 🗽 &bull; Not financial or legal advice &bull; TalkMyBill</p>
+        <p>Built for everyone 🗽 &bull; Not financial or legal advice &bull; TalkMyBill</p>
       </footer>
     </div>
   )
