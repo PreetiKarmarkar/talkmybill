@@ -198,7 +198,7 @@ export default function App() {
             <div className="hero-emoji">🧾</div>
             <h1 className="hero-title">What is this bill even<br />charging me for? 🤔</h1>
             <p className="hero-sub">
-              Drop any bill — medical, electric, phone, wifi, insurance — we'll explain every charge in plain English
+              Drop any bill: medical, electric, phone, wifi, insurance. We'll explain every charge in plain English.
             </p>
 
             <div
