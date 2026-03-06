@@ -572,12 +572,15 @@ body {
 }
 
 .section-header {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--turquoise);
-  border-bottom: 1.5px solid rgba(68, 127, 152, 0.18);
-  padding-bottom: 9px;
-  margin: 28px 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6B8CAE;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-bottom: none;
+  padding-bottom: 0;
+  margin: 28px 0 6px;
+  display: block;
 }
 
 .section-header:first-child { margin-top: 0; }
