@@ -70,39 +70,7 @@ function formatAnalysis(text) {
     if (/^(🧾|⚠️|💡)/.test(trimmed)) {
       flushList(i)
       const headerText = trimmed.replace(/^(🧾|⚠️|💡)\s*/, '').replace(/:$/, '').trim()
-      let icon = null
-      if (trimmed.startsWith('🧾')) {
-        icon = (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A6580" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="5" y="2" width="14" height="20" rx="2"/>
-            <line x1="9" y1="7" x2="15" y2="7"/>
-            <line x1="9" y1="11" x2="15" y2="11"/>
-            <circle cx="9" cy="15" r="1" fill="#4A6580"/>
-          </svg>
-        )
-      } else if (trimmed.startsWith('⚠️')) {
-        icon = (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A6580" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-        )
-      } else if (trimmed.startsWith('💡')) {
-        icon = (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A6580" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="9" y1="18" x2="15" y2="18"/>
-            <line x1="10" y1="22" x2="14" y2="22"/>
-            <path d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17H8v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z"/>
-          </svg>
-        )
-      }
-      elements.push(
-        <div key={i} className="section-header-wrap">
-          <div className="section-icon-circle">{icon}</div>
-          <h3 className="section-header">{headerText}</h3>
-        </div>
-      )
+      elements.push(<h3 key={i} className="section-header">{headerText}</h3>)
       return
     }
     if (/^\*\*[^*]+\*\*$/.test(trimmed)) {
