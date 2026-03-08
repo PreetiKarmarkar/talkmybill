@@ -571,27 +571,6 @@ body {
   line-height: 1.78;
 }
 
-.section-header-wrap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 28px 0 6px;
-}
-
-.section-header-wrap:first-child { margin-top: 0; }
-
-.section-icon-circle {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(99, 130, 167, 0.12);
-  border: 1px solid rgba(99, 130, 167, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
 .section-header {
   font-size: 15px;
   font-weight: 700;
@@ -600,8 +579,160 @@ body {
   text-transform: uppercase;
   border-bottom: none;
   padding-bottom: 0;
-  margin: 0;
+  margin: 28px 0 6px;
   display: block;
+}
+
+.section-header:first-child { margin-top: 0; }
+
+/* ============================================================
+   TEMPLATE BOXES — CALL SCRIPT & EMAIL TEMPLATE
+   ============================================================ */
+.template-block {
+  margin: 14px 0 20px;
+}
+
+.template-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.template-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6B8CAE;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.template-box {
+  background: rgba(99, 130, 167, 0.07);
+  border: 1px solid rgba(99, 130, 167, 0.20);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+
+.template-text {
+  font-size: 0.90rem;
+  color: var(--text-mid);
+  line-height: 1.65;
+  white-space: pre-wrap;
+  font-family: inherit;
+  margin: 0;
+}
+
+.copy-btn {
+  background: rgba(99, 130, 167, 0.10);
+  border: 1px solid rgba(99, 130, 167, 0.25);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #6B8CAE;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.copy-btn:hover {
+  background: rgba(68, 127, 152, 0.18);
+  border-color: rgba(68, 127, 152, 0.35);
+  color: var(--turquoise);
+}
+
+.copy-btn--copied {
+  background: rgba(68, 127, 152, 0.15);
+  border-color: rgba(68, 127, 152, 0.40);
+  color: var(--turquoise);
+}
+
+/* ============================================================
+   ACCORDION — Call Script & Email Template
+   ============================================================ */
+.accordion-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 14px 0 4px;
+}
+
+.accordion-item {
+  background: rgba(255, 255, 255, 0.40);
+  border: 1px solid rgba(99, 130, 167, 0.22);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.accordion-item--open {
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 4px 16px rgba(68, 127, 152, 0.10);
+}
+
+.accordion-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.accordion-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(99, 130, 167, 0.12);
+  border: 1px solid rgba(99, 130, 167, 0.20);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.accordion-label {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.accordion-chevron {
+  color: #6B8CAE;
+  display: flex;
+  align-items: center;
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+.accordion-item--open .accordion-chevron {
+  transform: rotate(180deg);
+}
+
+.accordion-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+}
+
+.accordion-item--open .accordion-body {
+  max-height: 800px;
+}
+
+.accordion-body-inner {
+  padding: 4px 16px 16px;
+  border-top: 1px solid rgba(99, 130, 167, 0.12);
+}
+
+.accordion-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 
 .analysis-p {
