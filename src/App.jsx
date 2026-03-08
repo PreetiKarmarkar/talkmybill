@@ -1,26 +1,46 @@
 import { useState, useRef, useCallback } from 'react'
 
-const SYSTEM_PROMPT = `You are TalkMyBill, a knowledgeable friend who helps people understand any bill they receive — electricity, medical, phone, wifi, insurance, credit card, subscriptions, and more.
+const SYSTEM_PROMPT = `You are TalkMyBill, a sharp and caring bill advocate. Your job is not to summarize bills — it is to fight for the person reading them. You speak like a smart, direct friend who just reviewed their bill and is sitting across from them explaining exactly what is going on, whether they are being treated fairly, and what they should do about it.
 
-RESPONSE RULES:
-- Write in short conversational paragraphs. No bullet points, no lists whatsoever.
-- No emojis anywhere in your response except the three section header markers below.
-- Skip information the user can already see: invoice numbers, dates, addresses, account numbers. Never repeat those back.
-- Lead with the most important thing: is this bill normal or not?
-- Keep the total response under 150 words. Be concise.
+FORMAT YOUR RESPONSE USING THESE EXACT MARKERS — section title on its own line, content starting on the next line. Use no emojis anywhere in the content itself, only the markers below:
 
-FORMAT YOUR RESPONSE EXACTLY LIKE THIS — section title on its own line, content on the next line:
+📌 HERE'S WHAT'S HAPPENING
+In 2-3 conversational sentences, explain what this bill is and what the person actually owes. Use their real numbers. Speak directly to them using "you". No jargon. Example: "This is your monthly Verizon bill. You owe $127.43 this month, which is $22 more than a typical Verizon plan in your tier."
 
-🧾 WHAT YOUR BILL SAYS
-In 2–3 sentences, explain what the charge actually is and whether the amount is standard. Sound like a friend who knows this stuff, not a receipt scanner.
+⚖️ ARE YOU BEING CHARGED FAIRLY?
+This is the most important section. Analyze the charges critically. Is anything unusual, added quietly, or higher than it should be? Are there vague or unjustified fees? For medical bills — are there charges insurance should have covered? For utility bills — excessive riders or surcharges? For phone or wifi — new fees that weren't there before? For subscriptions — price increases or duplicate charges?
 
-⚠️ FLAGS
-Only mention something if it is genuinely unusual, overpriced, or worth questioning. If everything looks normal, write exactly: Nothing unusual here. Do not flag normal things like standard tax rates or expected subscription amounts.
+Give your verdict as the very first line of this section:
+- "Yes, something looks off here." — if anything is suspicious
+- "This bill looks fair." — only if everything checks out completely
 
-💡 TIPS
-Give one specific actionable tip only if there is something worth doing. If the bill is fine, write exactly: No action needed.`
+Then explain your reasoning in 2-3 sentences using their actual numbers.
 
-const USER_MESSAGE = `Please analyze this bill and explain it to me in plain English. What am I being charged for? Is anything unusual? What should I do?`
+🔧 WHAT YOU SHOULD DO
+If your verdict was "Yes, something looks off here." — give 2-3 specific concrete actions. Not generic advice. Real steps with real details from their actual bill. Tell them exactly who to contact, what to reference, and what to ask for.
+
+If your verdict was "This bill looks fair." — write exactly this and nothing more: You are good here — no action needed.
+
+📞 WHAT TO SAY
+Only include this entire section if your verdict was "Yes, something looks off here." If the bill is fair, omit this section completely — do not write it at all.
+
+Use these exact sub-markers for the two templates:
+
+📱 CALL SCRIPT
+Write a specific call script using their real bill details — real charge names, real amounts, real dates. Make it sound natural and conversational.
+
+✉️ EMAIL TEMPLATE
+Write a specific email using their real bill details. Start with "Subject: " on the first line, then the full email body below it.
+
+RULES:
+- Write in conversational paragraphs, not bullet points
+- Speak directly to the person using "you" throughout
+- Never say "no action needed" on a medical bill — there is always something worth doing
+- Never invent charges that are not on the bill
+- Be honest — if the bill is fair, say so clearly and confidently
+- No emojis anywhere in the content, only the section markers above`
+
+const USER_MESSAGE = `Please review this bill and tell me if I'm being charged fairly. What's going on, is anything off, and what should I do?`
 
 // Load PDF.js from CDN and convert first page → base64 PNG
 async function pdfToBase64Image(file) {
@@ -49,30 +69,96 @@ async function pdfToBase64Image(file) {
   return canvas.toDataURL('image/png').split(',')[1]
 }
 
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch {
+      const el = document.createElement('textarea')
+      el.value = text
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <button className={`copy-btn${copied ? ' copy-btn--copied' : ''}`} onClick={handleCopy}>
+      {copied ? '✓ Copied' : 'Copy'}
+    </button>
+  )
+}
+
+function TemplateBox({ label, content }) {
+  return (
+    <div className="template-block">
+      <div className="template-block-header">
+        <span className="template-label">{label}</span>
+        <CopyButton text={content} />
+      </div>
+      <div className="template-box">
+        <p className="template-text">{content}</p>
+      </div>
+    </div>
+  )
+}
+
 function formatAnalysis(text) {
   const lines = text.split('\n')
   const elements = []
   let listItems = []
+  let collectingTemplate = null // 'call' | 'email' | null
+  let templateLines = []
+  let tmplIdx = 0
 
   const flushList = (key) => {
     if (listItems.length > 0) {
-      elements.push(
-        <ul key={`ul-${key}`} className="analysis-list">{listItems}</ul>
-      )
+      elements.push(<ul key={`ul-${key}`} className="analysis-list">{listItems}</ul>)
       listItems = []
     }
   }
 
+  const flushTemplate = (key) => {
+    if (collectingTemplate && templateLines.length > 0) {
+      const content = templateLines.join('\n').trim()
+      const label = collectingTemplate === 'call' ? 'CALL SCRIPT' : 'EMAIL TEMPLATE'
+      elements.push(<TemplateBox key={`tmpl-${key}-${tmplIdx++}`} label={label} content={content} />)
+    }
+    templateLines = []
+    collectingTemplate = null
+  }
+
   lines.forEach((line, i) => {
     const trimmed = line.trim()
-    if (!trimmed) { flushList(i); return }
 
-    if (/^(🧾|⚠️|💡)/.test(trimmed)) {
+    // Main section markers
+    if (/^(📌|⚖️|🔧|📞)/.test(trimmed)) {
       flushList(i)
-      const headerText = trimmed.replace(/^(🧾|⚠️|💡)\s*/, '').replace(/:$/, '').trim()
+      flushTemplate(i)
+      const headerText = trimmed.replace(/^(📌|⚖️|🔧|📞)\s*/, '').replace(/:$/, '').trim()
       elements.push(<h3 key={i} className="section-header">{headerText}</h3>)
       return
     }
+
+    // Template sub-section markers
+    if (/^(📱|✉️)/.test(trimmed)) {
+      flushList(i)
+      flushTemplate(i)
+      collectingTemplate = trimmed.startsWith('📱') ? 'call' : 'email'
+      return
+    }
+
+    // Collecting template lines
+    if (collectingTemplate !== null) {
+      templateLines.push(line)
+      return
+    }
+
+    if (!trimmed) { flushList(i); return }
+
     if (/^\*\*[^*]+\*\*$/.test(trimmed)) {
       flushList(i)
       elements.push(<p key={i} className="analysis-label">{trimmed.replace(/\*\*/g, '')}</p>)
@@ -83,11 +169,13 @@ function formatAnalysis(text) {
       listItems.push(<li key={i}>{clean}</li>)
       return
     }
+
     flushList(i)
     elements.push(<p key={i} className="analysis-p">{trimmed.replace(/\*\*([^*]+)\*\*/g, '$1')}</p>)
   })
 
   flushList('end')
+  flushTemplate('end')
   return elements
 }
 
