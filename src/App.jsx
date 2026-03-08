@@ -92,16 +92,57 @@ function CopyButton({ text }) {
   )
 }
 
-function TemplateBox({ label, content }) {
+function TemplateAccordion({ templates }) {
+  const [openIdx, setOpenIdx] = useState(null)
+  const toggle = (idx) => setOpenIdx(openIdx === idx ? null : idx)
+
+  const meta = {
+    call: {
+      label: 'Call Script',
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A6580" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/>
+        </svg>
+      ),
+    },
+    email: {
+      label: 'Email Template',
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A6580" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+      ),
+    },
+  }
+
   return (
-    <div className="template-block">
-      <div className="template-block-header">
-        <span className="template-label">{label}</span>
-        <CopyButton text={content} />
-      </div>
-      <div className="template-box">
-        <p className="template-text">{content}</p>
-      </div>
+    <div className="accordion-wrap">
+      {templates.map((tmpl, idx) => {
+        const isOpen = openIdx === idx
+        const { label, icon } = meta[tmpl.type] || { label: tmpl.type, icon: null }
+        return (
+          <div key={idx} className={`accordion-item${isOpen ? ' accordion-item--open' : ''}`}>
+            <button className="accordion-trigger" onClick={() => toggle(idx)}>
+              <span className="accordion-icon-wrap">{icon}</span>
+              <span className="accordion-label">{label}</span>
+              <span className="accordion-chevron">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </span>
+            </button>
+            <div className="accordion-body">
+              <div className="accordion-body-inner">
+                <p className="template-text">{tmpl.content}</p>
+                <div className="accordion-footer">
+                  <CopyButton text={tmpl.content} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -112,7 +153,8 @@ function formatAnalysis(text) {
   let listItems = []
   let collectingTemplate = null // 'call' | 'email' | null
   let templateLines = []
-  let tmplIdx = 0
+  let collectedTemplates = []
+  let accordIdx = 0
 
   const flushList = (key) => {
     if (listItems.length > 0) {
@@ -121,14 +163,20 @@ function formatAnalysis(text) {
     }
   }
 
-  const flushTemplate = (key) => {
+  const flushTemplate = () => {
     if (collectingTemplate && templateLines.length > 0) {
       const content = templateLines.join('\n').trim()
-      const label = collectingTemplate === 'call' ? 'CALL SCRIPT' : 'EMAIL TEMPLATE'
-      elements.push(<TemplateBox key={`tmpl-${key}-${tmplIdx++}`} label={label} content={content} />)
+      collectedTemplates.push({ type: collectingTemplate, content })
     }
     templateLines = []
     collectingTemplate = null
+  }
+
+  const renderAccordion = (key) => {
+    if (collectedTemplates.length > 0) {
+      elements.push(<TemplateAccordion key={`accord-${key}-${accordIdx++}`} templates={[...collectedTemplates]} />)
+      collectedTemplates = []
+    }
   }
 
   lines.forEach((line, i) => {
@@ -137,7 +185,8 @@ function formatAnalysis(text) {
     // Main section markers
     if (/^(📌|⚖️|🔧|📞)/.test(trimmed)) {
       flushList(i)
-      flushTemplate(i)
+      flushTemplate()
+      renderAccordion(i)
       const headerText = trimmed.replace(/^(📌|⚖️|🔧|📞)\s*/, '').replace(/:$/, '').trim()
       elements.push(<h3 key={i} className="section-header">{headerText}</h3>)
       return
@@ -146,7 +195,7 @@ function formatAnalysis(text) {
     // Template sub-section markers
     if (/^(📱|✉️)/.test(trimmed)) {
       flushList(i)
-      flushTemplate(i)
+      flushTemplate()
       collectingTemplate = trimmed.startsWith('📱') ? 'call' : 'email'
       return
     }
@@ -175,7 +224,8 @@ function formatAnalysis(text) {
   })
 
   flushList('end')
-  flushTemplate('end')
+  flushTemplate()
+  renderAccordion('end')
   return elements
 }
 
@@ -373,7 +423,6 @@ export default function App() {
           <section className="results-wrap">
             <div className="results-header">
               <h2 className="results-title">Here's what's going on 👇</h2>
-              <p className="results-sub">Plain English, no jargon, no fluff.</p>
             </div>
 
             <div className="analysis-card">{formatAnalysis(analysis)}</div>
