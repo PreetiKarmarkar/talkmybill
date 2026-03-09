@@ -231,7 +231,6 @@ function formatAnalysis(text) {
 
 function BillChat({ analysis }) {
   const [isOpen, setIsOpen] = useState(false)
-  const [isPulsing, setIsPulsing] = useState(true)
   const [messages, setMessages] = useState([
     { role: 'assistant', content: "Still confused? Ask me anything about your bill — I already read it." }
   ])
@@ -240,12 +239,9 @@ function BillChat({ analysis }) {
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsPulsing(false), 3000)
-    return () => clearTimeout(timer)
-  }, [])
-
-  useEffect(() => {
-    if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (isOpen) {
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    }
   }, [messages, isOpen])
 
   const sendMessage = async () => {
@@ -288,12 +284,22 @@ function BillChat({ analysis }) {
   }
 
   return (
-    <>
-      <div className={`chat-window${isOpen ? ' chat-window--open' : ''}`}>
-        <div className="chat-header">
-          <span className="chat-header-title">💬 Ask about your bill</span>
-          <button className="chat-close-btn" onClick={() => setIsOpen(false)}>✕</button>
-        </div>
+    <div className={`chat-panel${isOpen ? ' chat-panel--open' : ''}`}>
+      <button className="chat-panel-trigger" onClick={() => setIsOpen(o => !o)}>
+        <span className="chat-panel-trigger-left">
+          <span className="chat-panel-trigger-icon">💬</span>
+          <span className="chat-panel-trigger-text">
+            <span className="chat-panel-trigger-title">Still confused?</span>
+            <span className="chat-panel-trigger-sub">Ask me about your bill</span>
+          </span>
+        </span>
+        <span className="chat-panel-chevron">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </span>
+      </button>
+      <div className="chat-panel-body">
         <div className="chat-messages">
           {messages.map((msg, i) => (
             <div key={i} className={`chat-bubble chat-bubble--${msg.role === 'user' ? 'user' : 'bot'}`}>
@@ -311,7 +317,7 @@ function BillChat({ analysis }) {
           <input
             className="chat-input"
             type="text"
-            placeholder="Ask a question..."
+            placeholder="Ask a follow-up question..."
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -321,13 +327,7 @@ function BillChat({ analysis }) {
           </button>
         </div>
       </div>
-      <button
-        className={`chat-trigger-btn${isPulsing ? ' chat-trigger-btn--pulse' : ''}`}
-        onClick={() => { setIsOpen(o => !o); setIsPulsing(false) }}
-      >
-        💬 Still confused? Ask me.
-      </button>
-    </>
+    </div>
   )
 }
 
@@ -436,7 +436,6 @@ export default function App() {
   const reset = () => { setFile(null); setAnalysis(''); setError(''); setAppState('landing') }
 
   return (
-    <>
     <div className="app">
       {/* Floating colour orbs — CSS-only depth effect */}
       <div className="orb orb-1" aria-hidden="true" />
@@ -528,9 +527,15 @@ export default function App() {
               <h2 className="results-title">Bill reviewed. No lawyers needed.</h2>
             </div>
 
-            <div className="analysis-card">{formatAnalysis(analysis)}</div>
-
-            <button className="analyze-again-btn" onClick={reset}>📄 Analyze Another Bill</button>
+            <div className="results-layout">
+              <div className="results-main">
+                <div className="analysis-card">{formatAnalysis(analysis)}</div>
+                <button className="analyze-again-btn" onClick={reset}>📄 Analyze Another Bill</button>
+              </div>
+              <aside className="results-sidebar">
+                <BillChat analysis={analysis} />
+              </aside>
+            </div>
           </section>
         )}
       </main>
@@ -539,7 +544,5 @@ export default function App() {
         <p>Built for everyone &bull; Not financial or legal advice &bull; TalkMyBill</p>
       </footer>
     </div>
-    {appState === 'results' && <BillChat analysis={analysis} />}
-    </>
   )
 }
