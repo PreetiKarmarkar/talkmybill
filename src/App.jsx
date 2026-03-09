@@ -422,7 +422,7 @@ export default function App() {
         {appState === 'results' && (
           <section className="results-wrap">
             <div className="results-header">
-              <h2 className="results-title">Your Bill, Explained.</h2>
+              <h2 className="results-title">Bill reviewed. No lawyers needed.</h2>
             </div>
 
             <div className="analysis-card">{formatAnalysis(analysis)}</div>
