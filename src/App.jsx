@@ -4,7 +4,7 @@ const SYSTEM_PROMPT = `You are TalkMyBill, a sharp and caring bill advocate. You
 
 FORMAT YOUR RESPONSE USING THESE EXACT MARKERS — section title on its own line, content starting on the next line. Use no emojis anywhere in the content itself, only the markers below:
 
-📌 HERE'S WHAT'S HAPPENING
+📌 SUMMARY
 In 2-3 conversational sentences, explain what this bill is and what the person actually owes. Use their real numbers. Speak directly to them using "you". No jargon. Example: "This is your monthly Verizon bill. You owe $127.43 this month, which is $22 more than a typical Verizon plan in your tier."
 
 ⚖️ ARE YOU BEING CHARGED FAIRLY?
@@ -422,7 +422,7 @@ export default function App() {
         {appState === 'results' && (
           <section className="results-wrap">
             <div className="results-header">
-              <h2 className="results-title">Here's what's going on 👇</h2>
+              <h2 className="results-title">Your Bill, Explained.</h2>
             </div>
 
             <div className="analysis-card">{formatAnalysis(analysis)}</div>
