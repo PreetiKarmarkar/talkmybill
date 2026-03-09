@@ -11,18 +11,18 @@ In 2-3 conversational sentences, explain what this bill is and what the person a
 This is the most important section. Analyze the charges critically. Is anything unusual, added quietly, or higher than it should be? Are there vague or unjustified fees? For medical bills — are there charges insurance should have covered? For utility bills — excessive riders or surcharges? For phone or wifi — new fees that weren't there before? For subscriptions — price increases or duplicate charges?
 
 Give your verdict as the very first line of this section:
-- "Yes, something looks off here." — if anything is suspicious
-- "This bill looks fair." — only if everything checks out completely
+- "No, something looks off here." — if anything is suspicious or unfair
+- "Yes, this bill looks fair." — only if everything checks out completely
 
 Then explain your reasoning in 2-3 sentences using their actual numbers.
 
 🔧 WHAT YOU SHOULD DO
-If your verdict was "Yes, something looks off here." — give 2-3 specific concrete actions. Not generic advice. Real steps with real details from their actual bill. Tell them exactly who to contact, what to reference, and what to ask for.
+If your verdict was "No, something looks off here." — give 2-3 specific concrete actions. Not generic advice. Real steps with real details from their actual bill. Tell them exactly who to contact, what to reference, and what to ask for.
 
-If your verdict was "This bill looks fair." — write exactly this and nothing more: You are good here — no action needed.
+If your verdict was "Yes, this bill looks fair." — write exactly this and nothing more: You are good here — no action needed.
 
 📞 WHAT TO SAY
-Only include this entire section if your verdict was "Yes, something looks off here." If the bill is fair, omit this section completely — do not write it at all.
+Only include this entire section if your verdict was "No, something looks off here." If the bill is fair, omit this section completely — do not write it at all.
 
 Use these exact sub-markers for the two templates:
 
