@@ -474,6 +474,7 @@ export default function App() {
   const reset = () => { setFile(null); setAnalysis(''); setError(''); setAppState('landing') }
 
   return (
+    <>
     <div className="app">
       {/* Floating colour orbs — CSS-only depth effect */}
       <div className="orb orb-1" aria-hidden="true" />
@@ -560,18 +561,15 @@ export default function App() {
         )}
 
         {appState === 'results' && (
-          <>
-            <section className="results-wrap">
-              <div className="results-header">
-                <h2 className="results-title">Bill reviewed. No lawyers needed.</h2>
-              </div>
+          <section className="results-wrap">
+            <div className="results-header">
+              <h2 className="results-title">Bill reviewed. No lawyers needed.</h2>
+            </div>
 
-              <div className="analysis-card">{formatAnalysis(analysis)}</div>
+            <div className="analysis-card">{formatAnalysis(analysis)}</div>
 
-              <button className="analyze-again-btn" onClick={reset}>📄 Analyze Another Bill</button>
-            </section>
-            <BillChat analysis={analysis} />
-          </>
+            <button className="analyze-again-btn" onClick={reset}>📄 Analyze Another Bill</button>
+          </section>
         )}
       </main>
 
@@ -579,5 +577,7 @@ export default function App() {
         <p>Built for everyone &bull; Not financial or legal advice &bull; TalkMyBill</p>
       </footer>
     </div>
+    {appState === 'results' && <BillChat analysis={analysis} />}
+    </>
   )
 }
