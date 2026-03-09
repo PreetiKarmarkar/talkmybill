@@ -444,6 +444,7 @@ export default function App() {
   const reset = () => { setFile(null); setAnalysis(''); setError(''); setAppState('landing') }
 
   return (
+    <>
     <div className="app">
       {/* Floating colour orbs — CSS-only depth effect */}
       <div className="orb orb-1" aria-hidden="true" />
@@ -540,12 +541,13 @@ export default function App() {
             <button className="analyze-again-btn" onClick={reset}>📄 Analyze Another Bill</button>
           </section>
         )}
-        {appState === 'results' && <BillChat analysis={analysis} />}
       </main>
 
       <footer className="footer">
         <p>Built for everyone &bull; Not financial or legal advice &bull; TalkMyBill</p>
       </footer>
     </div>
+    {appState === 'results' && <BillChat analysis={analysis} />}
+    </>
   )
 }
