@@ -229,10 +229,24 @@ function formatAnalysis(text) {
   return elements
 }
 
+function RobotAvatar({ size = 40 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="20" cy="20" r="20" fill="#E8F4F8"/>
+      <rect x="11" y="14" width="18" height="14" rx="4" fill="#447F98"/>
+      <circle cx="16" cy="20" r="2" fill="white"/>
+      <circle cx="24" cy="20" r="2" fill="white"/>
+      <rect x="17" y="24" width="6" height="2" rx="1" fill="white"/>
+      <rect x="19" y="10" width="2" height="4" rx="1" fill="#447F98"/>
+      <circle cx="20" cy="10" r="1.5" fill="#447F98"/>
+    </svg>
+  )
+}
+
 function BillChat({ analysis }) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: "Still confused? Ask me anything about your bill — I already read it." }
+    { role: 'assistant', content: "Hi there! Have any questions or need clarification about your bill review? I'm here to help." }
   ])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -262,7 +276,7 @@ function BillChat({ analysis }) {
           messages: [
             {
               role: 'system',
-              content: `You are a bill assistant. You already analyzed the user's bill. Here is the analysis:\n\n${analysis}\n\nAnswer follow up questions about it in plain conversational English. Keep every answer to 2-3 sentences maximum. Be direct and specific. Use the actual numbers from their bill. Never be vague.`
+              content: `You are a bill assistant. You already analyzed the user's bill. Here is the analysis:\n\n${analysis}\n\nKeep answers short — 2-3 sentences max. No bullet points. Plain conversational English. Use actual numbers from the bill.`
             },
             ...updatedMessages
           ],
@@ -285,30 +299,57 @@ function BillChat({ analysis }) {
 
   return (
     <div className="chat-fab">
-      {isOpen && (
+      {isOpen ? (
         <div className="chat-window">
+          {/* Header */}
           <div className="chat-window-header">
-            <span className="chat-window-title">💬 Ask about your bill</span>
-            <button className="chat-close-btn" onClick={() => setIsOpen(false)}>✕</button>
+            <div className="chat-window-header-left">
+              <div className="chat-avatar-wrap"><RobotAvatar size={40} /></div>
+              <span className="chat-window-title">Ask Me Chat</span>
+            </div>
+            <div className="chat-window-header-right">
+              <button className="chat-header-icon-btn" aria-label="More options">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round">
+                  <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
+                </svg>
+              </button>
+              <button className="chat-header-icon-btn" onClick={() => setIsOpen(false)} aria-label="Close">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
           </div>
+          {/* Messages */}
           <div className="chat-messages">
             {messages.map((msg, i) => (
-              <div key={i} className={`chat-bubble chat-bubble--${msg.role === 'user' ? 'user' : 'bot'}`}>
-                {msg.content}
-              </div>
+              msg.role === 'user' ? (
+                <div key={i} className="chat-row chat-row--user">
+                  <div className="chat-bubble chat-bubble--user">{msg.content}</div>
+                </div>
+              ) : (
+                <div key={i} className="chat-row chat-row--bot">
+                  <div className="chat-bot-avatar"><RobotAvatar size={28} /></div>
+                  <div className="chat-bubble chat-bubble--bot">{msg.content}</div>
+                </div>
+              )
             ))}
             {isLoading && (
-              <div className="chat-bubble chat-bubble--bot chat-bubble--loading">
-                <span className="chat-dot" /><span className="chat-dot" /><span className="chat-dot" />
+              <div className="chat-row chat-row--bot">
+                <div className="chat-bot-avatar"><RobotAvatar size={28} /></div>
+                <div className="chat-bubble chat-bubble--bot chat-bubble--loading">
+                  <span className="chat-dot" /><span className="chat-dot" /><span className="chat-dot" />
+                </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
+          {/* Input */}
           <div className="chat-input-row">
             <input
               className="chat-input"
               type="text"
-              placeholder="Ask a follow-up question..."
+              placeholder="Type your message..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -318,10 +359,12 @@ function BillChat({ analysis }) {
             </button>
           </div>
         </div>
+      ) : (
+        <button className="chat-fab-btn" onClick={() => setIsOpen(true)}>
+          <span className="chat-fab-avatar"><RobotAvatar size={32} /></span>
+          <span className="chat-fab-text">Still confused? Ask me</span>
+        </button>
       )}
-      <button className="chat-fab-btn" onClick={() => setIsOpen(o => !o)}>
-        💬 Still confused? Ask me.
-      </button>
     </div>
   )
 }
