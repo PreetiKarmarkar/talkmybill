@@ -433,7 +433,7 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <p>Built for everyone 🗽 &bull; Not financial or legal advice &bull; TalkMyBill</p>
+        <p>Built for everyone &bull; Not financial or legal advice &bull; TalkMyBill</p>
       </footer>
     </div>
   )
