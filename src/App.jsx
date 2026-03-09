@@ -284,49 +284,44 @@ function BillChat({ analysis }) {
   }
 
   return (
-    <div className={`chat-panel${isOpen ? ' chat-panel--open' : ''}`}>
-      <button className="chat-panel-trigger" onClick={() => setIsOpen(o => !o)}>
-        <span className="chat-panel-trigger-left">
-          <span className="chat-panel-trigger-icon">💬</span>
-          <span className="chat-panel-trigger-text">
-            <span className="chat-panel-trigger-title">Still confused?</span>
-            <span className="chat-panel-trigger-sub">Ask me about your bill</span>
-          </span>
-        </span>
-        <span className="chat-panel-chevron">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
-        </span>
+    <div className="chat-fab">
+      {isOpen && (
+        <div className="chat-window">
+          <div className="chat-window-header">
+            <span className="chat-window-title">💬 Ask about your bill</span>
+            <button className="chat-close-btn" onClick={() => setIsOpen(false)}>✕</button>
+          </div>
+          <div className="chat-messages">
+            {messages.map((msg, i) => (
+              <div key={i} className={`chat-bubble chat-bubble--${msg.role === 'user' ? 'user' : 'bot'}`}>
+                {msg.content}
+              </div>
+            ))}
+            {isLoading && (
+              <div className="chat-bubble chat-bubble--bot chat-bubble--loading">
+                <span className="chat-dot" /><span className="chat-dot" /><span className="chat-dot" />
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+          <div className="chat-input-row">
+            <input
+              className="chat-input"
+              type="text"
+              placeholder="Ask a follow-up question..."
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <button className="chat-send-btn" onClick={sendMessage} disabled={!inputValue.trim() || isLoading}>
+              Send
+            </button>
+          </div>
+        </div>
+      )}
+      <button className="chat-fab-btn" onClick={() => setIsOpen(o => !o)}>
+        💬 Still confused? Ask me.
       </button>
-      <div className="chat-panel-body">
-        <div className="chat-messages">
-          {messages.map((msg, i) => (
-            <div key={i} className={`chat-bubble chat-bubble--${msg.role === 'user' ? 'user' : 'bot'}`}>
-              {msg.content}
-            </div>
-          ))}
-          {isLoading && (
-            <div className="chat-bubble chat-bubble--bot chat-bubble--loading">
-              <span className="chat-dot" /><span className="chat-dot" /><span className="chat-dot" />
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-        <div className="chat-input-row">
-          <input
-            className="chat-input"
-            type="text"
-            placeholder="Ask a follow-up question..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          <button className="chat-send-btn" onClick={sendMessage} disabled={!inputValue.trim() || isLoading}>
-            Send
-          </button>
-        </div>
-      </div>
     </div>
   )
 }
@@ -522,21 +517,18 @@ export default function App() {
         )}
 
         {appState === 'results' && (
-          <section className="results-wrap">
-            <div className="results-header">
-              <h2 className="results-title">Bill reviewed. No lawyers needed.</h2>
-            </div>
-
-            <div className="results-layout">
-              <div className="results-main">
-                <div className="analysis-card">{formatAnalysis(analysis)}</div>
-                <button className="analyze-again-btn" onClick={reset}>📄 Analyze Another Bill</button>
+          <>
+            <section className="results-wrap">
+              <div className="results-header">
+                <h2 className="results-title">Bill reviewed. No lawyers needed.</h2>
               </div>
-              <aside className="results-sidebar">
-                <BillChat analysis={analysis} />
-              </aside>
-            </div>
-          </section>
+
+              <div className="analysis-card">{formatAnalysis(analysis)}</div>
+
+              <button className="analyze-again-btn" onClick={reset}>📄 Analyze Another Bill</button>
+            </section>
+            <BillChat analysis={analysis} />
+          </>
         )}
       </main>
 
