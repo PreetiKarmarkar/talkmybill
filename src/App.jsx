@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 
 const SYSTEM_PROMPT = `You are TalkMyBill, a sharp and caring bill advocate. Your job is not to summarize bills — it is to fight for the person reading them. You speak like a smart, direct friend who just reviewed their bill and is sitting across from them explaining exactly what is going on, whether they are being treated fairly, and what they should do about it.
 
@@ -229,6 +229,116 @@ function formatAnalysis(text) {
   return elements
 }
 
+function BillChat({ analysis }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isPulsing, setIsPulsing] = useState(true)
+  const [messages, setMessages] = useState([
+    { role: 'assistant', content: 'Still confused? Ask me anything about your bill. I already read it so I have the full context.' }
+  ])
+  const [inputValue, setInputValue] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const messagesEndRef = useRef(null)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsPulsing(false), 3000)
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isOpen])
+
+  const sendMessage = async () => {
+    if (!inputValue.trim() || isLoading) return
+    const userMsg = { role: 'user', content: inputValue.trim() }
+    const updatedMessages = [...messages, userMsg]
+    setMessages(updatedMessages)
+    setInputValue('')
+    setIsLoading(true)
+    try {
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          max_tokens: 300,
+          messages: [
+            {
+              role: 'system',
+              content: `You are a helpful bill assistant. You already analyzed this bill:\n\n${analysis}\n\nThe user has follow-up questions. Answer clearly and conversationally in plain English. Be specific using the actual numbers and charges from their bill. Keep answers short and direct — 2-4 sentences max.`
+            },
+            ...updatedMessages
+          ],
+        }),
+      })
+      if (!res.ok) throw new Error('Request failed')
+      const data = await res.json()
+      const reply = data.choices?.[0]?.message?.content
+      if (reply) setMessages(prev => [...prev, { role: 'assistant', content: reply }])
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' }])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
+  }
+
+  return (
+    <div className="chat-widget">
+      {isOpen && (
+        <div className="chat-window">
+          <div className="chat-header">
+            <span className="chat-header-title">Ask about your bill</span>
+            <button className="chat-close-btn" onClick={() => setIsOpen(false)}>✕</button>
+          </div>
+          <div className="chat-messages">
+            {messages.map((msg, i) => (
+              <div key={i} className={`chat-bubble chat-bubble--${msg.role === 'user' ? 'user' : 'bot'}`}>
+                {msg.content}
+              </div>
+            ))}
+            {isLoading && (
+              <div className="chat-bubble chat-bubble--bot chat-bubble--loading">
+                <span className="chat-dot" /><span className="chat-dot" /><span className="chat-dot" />
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+          <div className="chat-input-row">
+            <input
+              className="chat-input"
+              type="text"
+              placeholder="Ask a question..."
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <button className="chat-send-btn" onClick={sendMessage} disabled={!inputValue.trim() || isLoading}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+      <button
+        className={`chat-trigger${isPulsing ? ' chat-trigger--pulse' : ''}`}
+        onClick={() => { setIsOpen(o => !o); setIsPulsing(false) }}
+      >
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        </svg>
+        <span>Still confused? Ask me.</span>
+      </button>
+    </div>
+  )
+}
+
 export default function App() {
   const [appState, setAppState] = useState('landing')
   const [file, setFile] = useState(null)
@@ -430,6 +540,7 @@ export default function App() {
             <button className="analyze-again-btn" onClick={reset}>📄 Analyze Another Bill</button>
           </section>
         )}
+        {appState === 'results' && <BillChat analysis={analysis} />}
       </main>
 
       <footer className="footer">
