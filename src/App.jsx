@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 const SYSTEM_PROMPT = `You are TalkMyBill, a sharp and caring bill advocate. Your job is not to summarize bills — it is to fight for the person reading them. You speak like a smart, direct friend who just reviewed their bill and is sitting across from them explaining exactly what is going on, whether they are being treated fairly, and what they should do about it.
 
@@ -297,7 +298,7 @@ function BillChat({ analysis }) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
   }
 
-  return (
+  return createPortal(
     <div className="chat-fab">
       {isOpen ? (
         <div className="chat-window">
@@ -365,7 +366,8 @@ function BillChat({ analysis }) {
           <span className="chat-fab-text">Still confused? Ask me</span>
         </button>
       )}
-    </div>
+    </div>,
+    document.body
   )
 }
 
