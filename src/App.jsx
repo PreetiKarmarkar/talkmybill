@@ -244,6 +244,46 @@ function RobotAvatar({ size = 40 }) {
   )
 }
 
+const CHAT_CSS = `
+.chat-fab{position:fixed!important;bottom:28px!important;right:28px!important;left:auto!important;top:auto!important;z-index:9999!important;display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+.chat-fab-btn{display:flex;align-items:center;gap:10px;background:#fff;color:#447F98;border:1px solid rgba(68,127,152,.18);border-radius:50px;padding:8px 20px 8px 8px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.13),0 1px 4px rgba(0,0,0,.06);transition:box-shadow .2s,transform .2s;white-space:nowrap;font-family:inherit}
+.chat-fab-btn:hover{box-shadow:0 6px 30px rgba(0,0,0,.18),0 2px 6px rgba(0,0,0,.08);transform:translateY(-1px)}
+.chat-fab-avatar{width:36px;height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.chat-fab-text{font-size:14px;font-weight:600;color:#447F98}
+.chat-window{width:380px;height:520px;background:#fff;border-radius:16px;box-shadow:0 8px 48px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.08);display:flex;flex-direction:column;overflow:hidden;animation:chatSlideUp .22s ease both}
+@keyframes chatSlideUp{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.chat-window-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#fff;border-bottom:1px solid #f0f0f0;flex-shrink:0}
+.chat-window-header-left{display:flex;align-items:center;gap:10px}
+.chat-avatar-wrap{width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.chat-window-title{font-size:15px;font-weight:700;color:#1a2b3c;letter-spacing:-.2px}
+.chat-window-header-right{display:flex;align-items:center;gap:2px}
+.chat-header-icon-btn{background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;transition:background .15s}
+.chat-header-icon-btn:hover{background:#f5f5f5}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;background:#F0F4F8;display:flex;flex-direction:column;gap:10px}
+.chat-messages::-webkit-scrollbar{width:4px}
+.chat-messages::-webkit-scrollbar-track{background:transparent}
+.chat-messages::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px}
+.chat-row{display:flex;align-items:flex-start;gap:8px}
+.chat-row--user{justify-content:flex-end}
+.chat-bot-avatar{width:28px;height:28px;flex-shrink:0;margin-top:2px}
+.chat-bubble{max-width:78%;padding:10px 14px;font-size:14px;line-height:1.55;word-wrap:break-word}
+.chat-bubble--bot{background:#fff;color:#2c3e50;border-radius:4px 16px 16px 16px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.chat-bubble--user{background:#447F98;color:#fff;border-radius:16px 16px 4px 16px}
+.chat-bubble--loading{display:flex;align-items:center;gap:5px;padding:12px 16px}
+.chat-dot{width:7px;height:7px;border-radius:50%;background:#94B4C8;animation:chatDotBounce 1.2s ease-in-out infinite}
+.chat-dot:nth-child(2){animation-delay:.2s}
+.chat-dot:nth-child(3){animation-delay:.4s}
+@keyframes chatDotBounce{0%,80%,100%{transform:scale(.7);opacity:.5}40%{transform:scale(1.2);opacity:1}}
+.chat-input-row{display:flex;align-items:center;gap:8px;padding:12px 14px;background:#fff;border-top:1px solid #f0f0f0;flex-shrink:0}
+.chat-input{flex:1;border:1.5px solid #e5e7eb;border-radius:24px;padding:9px 16px;font-size:14px;font-family:inherit;outline:none;background:#fff;color:#2c3e50;transition:border-color .2s}
+.chat-input:focus{border-color:#447F98}
+.chat-input::placeholder{color:#b0b8c4}
+.chat-send-btn{background:#447F98;color:#fff;border:none;border-radius:24px;padding:9px 20px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;flex-shrink:0;transition:background .2s,transform .15s;white-space:nowrap}
+.chat-send-btn:hover:not(:disabled){background:#3a6e85;transform:translateY(-1px)}
+.chat-send-btn:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:600px){.chat-window{width:calc(100vw - 32px)!important;height:480px!important}.chat-fab{right:16px!important;bottom:16px!important}}
+`
+
 function BillChat({ analysis }) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState([
@@ -299,6 +339,8 @@ function BillChat({ analysis }) {
   }
 
   return createPortal(
+    <>
+    <style>{CHAT_CSS}</style>
     <div className="chat-fab">
       {isOpen ? (
         <div className="chat-window">
@@ -366,7 +408,8 @@ function BillChat({ analysis }) {
           <span className="chat-fab-text">Still confused? Ask me</span>
         </button>
       )}
-    </div>,
+    </div>
+    </>,
     document.body
   )
 }
