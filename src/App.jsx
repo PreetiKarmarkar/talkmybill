@@ -233,7 +233,7 @@ function BillChat({ analysis }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isPulsing, setIsPulsing] = useState(true)
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Still confused? Ask me anything about your bill. I already read it so I have the full context.' }
+    { role: 'assistant', content: "Still confused? Ask me anything about your bill — I already read it." }
   ])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -262,11 +262,11 @@ function BillChat({ analysis }) {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify({
           model: 'gpt-4o',
-          max_tokens: 300,
+          max_tokens: 200,
           messages: [
             {
               role: 'system',
-              content: `You are a helpful bill assistant. You already analyzed this bill:\n\n${analysis}\n\nThe user has follow-up questions. Answer clearly and conversationally in plain English. Be specific using the actual numbers and charges from their bill. Keep answers short and direct — 2-4 sentences max.`
+              content: `You are a bill assistant. You already analyzed the user's bill. Here is the analysis:\n\n${analysis}\n\nAnswer follow up questions about it in plain conversational English. Keep every answer to 2-3 sentences maximum. Be direct and specific. Use the actual numbers from their bill. Never be vague.`
             },
             ...updatedMessages
           ],
@@ -288,54 +288,46 @@ function BillChat({ analysis }) {
   }
 
   return (
-    <div className="chat-widget">
-      {isOpen && (
-        <div className="chat-window">
-          <div className="chat-header">
-            <span className="chat-header-title">Ask about your bill</span>
-            <button className="chat-close-btn" onClick={() => setIsOpen(false)}>✕</button>
-          </div>
-          <div className="chat-messages">
-            {messages.map((msg, i) => (
-              <div key={i} className={`chat-bubble chat-bubble--${msg.role === 'user' ? 'user' : 'bot'}`}>
-                {msg.content}
-              </div>
-            ))}
-            {isLoading && (
-              <div className="chat-bubble chat-bubble--bot chat-bubble--loading">
-                <span className="chat-dot" /><span className="chat-dot" /><span className="chat-dot" />
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-          <div className="chat-input-row">
-            <input
-              className="chat-input"
-              type="text"
-              placeholder="Ask a question..."
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-            <button className="chat-send-btn" onClick={sendMessage} disabled={!inputValue.trim() || isLoading}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13"/>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-              </svg>
-            </button>
-          </div>
+    <>
+      <div className={`chat-window${isOpen ? ' chat-window--open' : ''}`}>
+        <div className="chat-header">
+          <span className="chat-header-title">💬 Ask about your bill</span>
+          <button className="chat-close-btn" onClick={() => setIsOpen(false)}>✕</button>
         </div>
-      )}
+        <div className="chat-messages">
+          {messages.map((msg, i) => (
+            <div key={i} className={`chat-bubble chat-bubble--${msg.role === 'user' ? 'user' : 'bot'}`}>
+              {msg.content}
+            </div>
+          ))}
+          {isLoading && (
+            <div className="chat-bubble chat-bubble--bot chat-bubble--loading">
+              <span className="chat-dot" /><span className="chat-dot" /><span className="chat-dot" />
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+        <div className="chat-input-row">
+          <input
+            className="chat-input"
+            type="text"
+            placeholder="Ask a question..."
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <button className="chat-send-btn" onClick={sendMessage} disabled={!inputValue.trim() || isLoading}>
+            Send
+          </button>
+        </div>
+      </div>
       <button
-        className={`chat-trigger${isPulsing ? ' chat-trigger--pulse' : ''}`}
+        className={`chat-trigger-btn${isPulsing ? ' chat-trigger-btn--pulse' : ''}`}
         onClick={() => { setIsOpen(o => !o); setIsPulsing(false) }}
       >
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-        </svg>
-        <span>Still confused? Ask me.</span>
+        💬 Still confused? Ask me.
       </button>
-    </div>
+    </>
   )
 }
 
